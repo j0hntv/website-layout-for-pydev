@@ -45,6 +45,8 @@ def parse_book_info(url):
     title, author = map(str.strip, soup.find('h1').text.split('::'))
     book_txt_url = soup.find('a', text='скачать txt')
     book_image_url = soup.find('div', class_='bookimage').find('img')
+    comments = soup.find_all('div', class_='texts')
+    genres = soup.find('span', class_='d_book').find_all('a')
 
     if book_txt_url:
         return {
@@ -52,14 +54,16 @@ def parse_book_info(url):
             'author': author,
             'book_txt_url': urljoin(URL, book_txt_url['href']),
             'book_image_url': urljoin(URL, book_image_url['src']),
-            'book_image_name': book_image_url['src'].split('/')[-1]
+            'book_image_name': book_image_url['src'].split('/')[-1],
+            'comments': [comment.find('span', class_='black').text for comment in comments],
+            'genres': [genre.text for genre in genres]
         }
 
 def main():
     os.makedirs(FOLDER_PATH, exist_ok=True)
     os.makedirs(IMAGES_PATH, exist_ok=True)
 
-    for i in range(1, 50):
+    for i in range(9, 10):
         book_url = urljoin(URL, f'b{i}/')
         book_info = parse_book_info(book_url)
         if not book_info:
@@ -73,6 +77,9 @@ def main():
         download_txt(txt_url, filename)
         download_image(image_url, imagename)
         print(filename)
+        print(image_url)
+        print(book_info['genres'])
+        print(book_info['comments'])
     
     print('[*] Done.')
 
