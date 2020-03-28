@@ -1,5 +1,4 @@
 import os
-import re
 import requests
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
@@ -9,6 +8,7 @@ from pathvalidate import sanitize_filename
 URL = 'http://tululu.org'
 FOLDER_PATH = 'books/'
 IMAGES_PATH = 'images/'
+MAX_FILENAME_LENGHT = 50
 
 
 def download_txt(url, filename, folder=FOLDER_PATH):
@@ -17,7 +17,7 @@ def download_txt(url, filename, folder=FOLDER_PATH):
     if not response.status_code == 200:
         return
 
-    path = os.path.join(folder, f'{sanitize_filename(filename)}.txt')
+    path = os.path.join(folder, f'{sanitize_filename(filename)[:MAX_FILENAME_LENGHT]}.txt')
 
     with open(path, 'w') as file:
         file.write(response.text)
@@ -58,31 +58,3 @@ def parse_book_info(url):
             'comments': [comment.find('span', class_='black').text for comment in comments],
             'genres': [genre.text for genre in genres]
         }
-
-def main():
-    os.makedirs(FOLDER_PATH, exist_ok=True)
-    os.makedirs(IMAGES_PATH, exist_ok=True)
-
-    for i in range(9, 10):
-        book_url = urljoin(URL, f'b{i}/')
-        book_info = parse_book_info(book_url)
-        if not book_info:
-            continue
-        filename = f'{i}. {book_info["title"]}'
-        imagename = book_info['book_image_name']
-
-        txt_url = book_info['book_txt_url']
-        image_url = book_info['book_image_url']
-
-        download_txt(txt_url, filename)
-        download_image(image_url, imagename)
-        print(filename)
-        print(image_url)
-        print(book_info['genres'])
-        print(book_info['comments'])
-    
-    print('[*] Done.')
-
-
-if __name__ == '__main__':
-    main()
