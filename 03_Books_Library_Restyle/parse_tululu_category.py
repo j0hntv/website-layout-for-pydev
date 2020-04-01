@@ -1,3 +1,4 @@
+import json
 import os
 import requests
 from urllib.parse import urljoin
@@ -33,29 +34,45 @@ def get_book_links(url=CATEGORY_URL, total_pages=1):
 
 
 def main():
+    print('Download...')
     os.makedirs(FOLDER_PATH, exist_ok=True)
     os.makedirs(IMAGES_PATH, exist_ok=True)
 
     book_links = get_book_links()
+    books_info = []
 
     time = monotonic()
 
     for book_link in book_links:
         book_info = parse_book_info(book_link)
+        
         if not book_info:
             continue
-        filename = f'{book_info["title"]}'
-        imagename = book_info['book_image_name']
 
+        filename = book_info['title']
+        imagename = book_info['book_image_name']
         txt_url = book_info['book_txt_url']
         image_url = book_info['book_image_url']
 
         download_txt(txt_url, filename)
         download_image(image_url, imagename)
 
+        description = {
+            'title': filename,
+            'author': book_info['author'],
+            'img_src': os.path.join(IMAGES_PATH, imagename),
+            'book_path': os.path.join(FOLDER_PATH, filename),
+            'comments': book_info['comments'],
+            'genres': book_info['genres']
+        }
+
+        books_info.append(description)
+
+    with open('description.json', 'w') as file:
+        json.dump(books_info, file, ensure_ascii=False)
+
     print(f'Done in {monotonic() - time:.2f} sec.')
 
 
 if __name__ == '__main__':
     main()
-
