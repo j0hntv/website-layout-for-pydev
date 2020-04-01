@@ -42,11 +42,11 @@ def parse_book_info(url):
         return
 
     soup = BeautifulSoup(response.text, 'lxml')
-    title, author = map(str.strip, soup.find('h1').text.split('::'))
-    book_txt_url = soup.find('a', text='скачать txt')
-    book_image_url = soup.find('div', class_='bookimage').find('img')
-    comments = soup.find_all('div', class_='texts')
-    genres = soup.find('span', class_='d_book').find_all('a')
+    title, author = map(str.strip, soup.select_one('h1').text.split('::'))
+    book_txt_url = soup.select_one('.d_book a[title*="скачать книгу txt"]')
+    book_image_url = soup.select_one('.d_book a img')
+    comments = soup.select('.texts .black')
+    genres = soup.select('span.d_book a')
 
     if book_txt_url:
         return {
@@ -55,6 +55,6 @@ def parse_book_info(url):
             'book_txt_url': urljoin(URL, book_txt_url['href']),
             'book_image_url': urljoin(URL, book_image_url['src']),
             'book_image_name': book_image_url['src'].split('/')[-1],
-            'comments': [comment.find('span', class_='black').text for comment in comments],
+            'comments': [comment.text for comment in comments],
             'genres': [genre.text for genre in genres]
         }
