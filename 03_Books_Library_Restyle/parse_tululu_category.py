@@ -14,6 +14,7 @@ FOLDER_PATH = 'books/'
 IMAGES_PATH = 'images/'
 MAX_FILENAME_LENGHT = 50
 
+
 def download_txt(url, filename, folder):
     response = requests.get(url, allow_redirects=False)
     response.raise_for_status()
@@ -69,10 +70,13 @@ def get_total_pages(url=CATEGORY_URL):
     end_page = soup.select('.npage')[-1].text
     return int(end_page)
 
-def get_book_links(url=CATEGORY_URL, start_page=1, end_page=2):
+def get_book_links(start_page, end_page, url=CATEGORY_URL):
     total_pages = get_total_pages()
     if end_page > total_pages:
         end_page = total_pages
+
+    if end_page < start_page:
+        raise IndexError
 
     for page_number in range(start_page, end_page):
         page_url = urljoin(url, str(page_number))
@@ -91,7 +95,7 @@ def create_args_parser():
     parser.add_argument('--dest_folder', help='Path to save', default='.')
     parser.add_argument('--skip_imgs', help='Do not save images', action='store_true')
     parser.add_argument('--skip_txt', help='Do not save books', action='store_true')
-    parser.add_argument('--json_path', help='Description path', default='.')
+    parser.add_argument('--json_path', help='Description path')
     return parser
 
 def main():
@@ -99,20 +103,25 @@ def main():
     args = parser.parse_args()
 
     print('Download...')
+
     txt_path = os.path.join(args.dest_folder, FOLDER_PATH)
     img_path = os.path.join(args.dest_folder, IMAGES_PATH)
     os.makedirs(txt_path, exist_ok=True)
     os.makedirs(img_path, exist_ok=True)
+    if args.json_path:
+        os.makedirs(args.json_path, exist_ok=True)
+        json_path = os.path.join(args.json_path, 'description.json')
+    else:
+        json_path = os.path.join(args.dest_folder, 'description.json')
 
+    
     book_links = get_book_links(start_page=args.start_page, end_page=args.end_page)
-
     books_info = []
 
     time = monotonic()
 
     for book_link in book_links:
         book_info = parse_book_info(book_link)
-        
         if not book_info:
             continue
 
@@ -138,11 +147,14 @@ def main():
 
         books_info.append(description)
 
-    with open('description.json', 'w') as file:
+    with open(json_path, 'w') as file:
         json.dump(books_info, file, ensure_ascii=False)
 
     print(f'Done in {monotonic() - time:.2f} sec.')
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except IndexError:
+        print('[*] Ошибка в аргументах --start_page и --end_page')
