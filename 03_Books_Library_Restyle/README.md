@@ -1,6 +1,6 @@
 # Tululu Book Parser
 
-Парсер книг с онлайн библиотеки tululu.org.
+Парсер книг с онлайн библиотеки [tululu.org.](http://tululu.org/)
 
 ## Установка зависимостей
 ```

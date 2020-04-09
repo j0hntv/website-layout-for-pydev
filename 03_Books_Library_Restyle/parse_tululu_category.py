@@ -10,16 +10,24 @@ from pathvalidate import sanitize_filename
 
 BASE_URL = 'http://tululu.org'
 CATEGORY_URL = 'http://tululu.org/l55/'
-FOLDER_PATH = 'books/'
-IMAGES_PATH = 'images/'
+FOLDER_PATH = 'books'
+IMAGES_PATH = 'images'
 MAX_FILENAME_LENGHT = 50
+
+
+class StartEndPageError(Exception):
+    pass
+
+
+def raise_for_status(response):
+    response.raise_for_status()
+    if response.status_code != 200:
+        raise requests.HTTPError
 
 
 def download_txt(url, filename, folder):
     response = requests.get(url, allow_redirects=False)
-    response.raise_for_status()
-    if not response.status_code == 200:
-        return
+    raise_for_status(response)
 
     path = os.path.join(folder, f'{sanitize_filename(filename)[:MAX_FILENAME_LENGHT]}.txt')
 
@@ -29,9 +37,7 @@ def download_txt(url, filename, folder):
 
 def download_image(url, filename, folder):
     response = requests.get(url, allow_redirects=False)
-    response.raise_for_status()
-    if not response.status_code == 200:
-        return
+    raise_for_status(response)
 
     path = os.path.join(folder, filename)
 
@@ -41,13 +47,11 @@ def download_image(url, filename, folder):
 
 def parse_book_info(url):
     response = requests.get(url, allow_redirects=False)
-    response.raise_for_status()
-    if not response.status_code == 200:
-        return
+    raise_for_status(response)
 
     soup = BeautifulSoup(response.text, 'lxml')
     title, author = map(str.strip, soup.select_one('h1').text.split('::'))
-    book_txt_url = soup.select_one('.d_book a[title*="скачать книгу txt"]')
+    book_txt_url = soup.select('.d_book tr a')[-3]
     book_image_url = soup.select_one('.d_book a img')
     comments = soup.select('.texts .black')
     genres = soup.select('span.d_book a')
@@ -71,13 +75,6 @@ def get_total_pages(url=CATEGORY_URL):
     return int(end_page)
 
 def get_book_links(start_page, end_page, url=CATEGORY_URL):
-    total_pages = get_total_pages()
-    if end_page > total_pages:
-        end_page = total_pages
-
-    if end_page < start_page:
-        raise IndexError
-
     for page_number in range(start_page, end_page):
         page_url = urljoin(url, str(page_number))
         response = requests.get(page_url)
@@ -104,6 +101,16 @@ def main():
 
     print('Download...')
 
+    start_page = args.start_page
+    end_page=args.end_page
+
+    total_pages = get_total_pages()
+    if end_page > total_pages:
+        end_page = total_pages
+        
+    if end_page < start_page:
+        raise StartEndPageError('[*] Ошибка в аргументах --start_page и --end_page')
+
     txt_path = os.path.join(args.dest_folder, FOLDER_PATH)
     img_path = os.path.join(args.dest_folder, IMAGES_PATH)
     os.makedirs(txt_path, exist_ok=True)
@@ -114,8 +121,7 @@ def main():
     else:
         json_path = os.path.join(args.dest_folder, 'description.json')
 
-    
-    book_links = get_book_links(start_page=args.start_page, end_page=args.end_page)
+    book_links = get_book_links(start_page, end_page)
     books_info = []
 
     time = monotonic()
@@ -156,5 +162,7 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except IndexError:
-        print('[*] Ошибка в аргументах --start_page и --end_page')
+    except StartEndPageError as error:
+        print(error)
+    except requests.HTTPError:
+        pass
