@@ -12,7 +12,6 @@ from pathvalidate import sanitize_filename
 logger = logging.getLogger('tululu')
 logging.basicConfig(level=logging.INFO, format=f'[%(levelname)s] %(message)s')
 
-BASE_URL = 'http://tululu.org'
 CATEGORY_URL = 'http://tululu.org/l55/'
 FOLDER_PATH = 'books'
 IMAGES_PATH = 'images'
@@ -22,7 +21,7 @@ MAX_FILENAME_LENGHT = 50
 def raise_for_status(response):
     try:
         response.raise_for_status()
-    except requests.HTTPError as error:
+    except (requests.HTTPError, requests.ConnectionError) as error:
         logger.error(error)
 
 def get_hash(obj, algorithm='md5'):
@@ -74,8 +73,8 @@ def parse_book_info(url):
         return {
             'title': title,
             'author': author,
-            'book_txt_url': urljoin(BASE_URL, book_txt_url['href']),
-            'book_image_url': urljoin(BASE_URL, book_image_url['src']),
+            'book_txt_url': urljoin(url, book_txt_url['href']),
+            'book_image_url': urljoin(url, book_image_url['src']),
             'book_image_name': book_image_url['src'].split('/')[-1],
             'comments': [comment.text for comment in comments],
             'genres': [genre.text for genre in genres]
@@ -142,31 +141,34 @@ def main():
     time = monotonic()
 
     for book_link in book_links:
-        book_info = parse_book_info(book_link)
-        if not book_info:
-            continue
+        try:
+            book_info = parse_book_info(book_link)
+            if not book_info:
+                continue
 
-        filename = book_info['title']
-        imagename = book_info['book_image_name']
-        txt_url = book_info['book_txt_url']
-        image_url = book_info['book_image_url']
+            filename = book_info['title']
+            imagename = book_info['book_image_name']
+            txt_url = book_info['book_txt_url']
+            image_url = book_info['book_image_url']
 
-        description = {
-            'title': filename,
-            'author': book_info['author'],
-            'comments': book_info['comments'],
-            'genres': book_info['genres']
-        }
+            description = {
+                'title': filename,
+                'author': book_info['author'],
+                'comments': book_info['comments'],
+                'genres': book_info['genres']
+            }
 
-        if not args.skip_txt:
-            book_path_returned = download_txt(txt_url, filename, txt_path)
-            description['book_src'] = book_path_returned
+            if not args.skip_txt:
+                book_path_returned = download_txt(txt_url, filename, txt_path)
+                description['book_src'] = book_path_returned
 
-        if not args.skip_imgs:
-            img_path_returned = download_image(image_url, imagename, img_path)
-            description['img_src'] = img_path_returned
+            if not args.skip_imgs:
+                img_path_returned = download_image(image_url, imagename, img_path)
+                description['img_src'] = img_path_returned
 
-        books_info.append(description)
+            books_info.append(description)
+        except Exception as error:
+            logger.error(error)
 
     with open(json_path, 'w') as file:
         json.dump(books_info, file, ensure_ascii=False)
