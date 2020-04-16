@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import os
 import requests
@@ -15,34 +16,43 @@ IMAGES_PATH = 'images'
 MAX_FILENAME_LENGHT = 50
 
 
-class StartEndPageError(Exception):
-    pass
-
-
 def raise_for_status(response):
     response.raise_for_status()
     if response.status_code != 200:
         raise requests.HTTPError
 
+def get_hash(obj, algorithm='md5'):
+    hash_obj = hashlib.new(algorithm)
+    if not isinstance(obj, bytes):
+        obj = obj.encode()
+    hash_obj.update(obj)
+    return hash_obj.hexdigest()
 
 def download_txt(url, filename, folder):
+    filename = sanitize_filename(filename)[:MAX_FILENAME_LENGHT]
     response = requests.get(url, allow_redirects=False)
     raise_for_status(response)
 
-    path = os.path.join(folder, f'{sanitize_filename(filename)[:MAX_FILENAME_LENGHT]}.txt')
+    book = response.text
+    book_hash = get_hash(book)
+    path = os.path.join(folder, f'{filename}_{book_hash}.txt')
 
     with open(path, 'w') as file:
-        file.write(response.text)
+        file.write(book)
     return path
 
 def download_image(url, filename, folder):
     response = requests.get(url, allow_redirects=False)
     raise_for_status(response)
 
-    path = os.path.join(folder, filename)
+    img = response.content
+    img_hash = get_hash(img)
+
+    name, extension = os.path.splitext(filename)
+    path = os.path.join(folder, f'{name}_{img_hash}{extension}')
 
     with open(path, 'wb') as file:
-        file.write(response.content)
+        file.write(img)
     return path
 
 def parse_book_info(url):
@@ -109,7 +119,8 @@ def main():
         end_page = total_pages
         
     if end_page < start_page:
-        raise StartEndPageError('[*] Ошибка в аргументах --start_page и --end_page')
+        print('[*] Ошибка в аргументах --start_page и --end_page')
+        return
 
     txt_path = os.path.join(args.dest_folder, FOLDER_PATH)
     img_path = os.path.join(args.dest_folder, IMAGES_PATH)
@@ -162,7 +173,5 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except StartEndPageError as error:
-        print(error)
     except requests.HTTPError:
         pass
