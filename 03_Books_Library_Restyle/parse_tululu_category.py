@@ -147,20 +147,20 @@ def main():
         txt_url = book_info['book_txt_url']
         image_url = book_info['book_image_url']
 
-        if not args.skip_txt:
-            download_txt(txt_url, filename, txt_path)
-
-        if not args.skip_imgs:
-            download_image(image_url, imagename, img_path)
-
         description = {
             'title': filename,
             'author': book_info['author'],
-            'img_src': os.path.join(img_path, imagename),
-            'book_path': os.path.join(txt_path, filename),
             'comments': book_info['comments'],
             'genres': book_info['genres']
         }
+
+        if not args.skip_txt:
+            book_path_returned = download_txt(txt_url, filename, txt_path)
+            description['book_src'] = book_path_returned
+
+        if not args.skip_imgs:
+            img_path_returned = download_image(image_url, imagename, img_path)
+            description['img_src'] = img_path_returned
 
         books_info.append(description)
 
