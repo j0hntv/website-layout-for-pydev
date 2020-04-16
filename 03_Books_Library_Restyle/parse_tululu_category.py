@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import json
+import logging
 import os
 import requests
 from time import monotonic
@@ -8,6 +9,8 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 
+logger = logging.getLogger('tululu')
+logging.basicConfig(level=logging.INFO, format=f'[%(levelname)s] %(message)s')
 
 BASE_URL = 'http://tululu.org'
 CATEGORY_URL = 'http://tululu.org/l55/'
@@ -17,9 +20,10 @@ MAX_FILENAME_LENGHT = 50
 
 
 def raise_for_status(response):
-    response.raise_for_status()
-    if response.status_code != 200:
-        raise requests.HTTPError
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as error:
+        logger.error(error)
 
 def get_hash(obj, algorithm='md5'):
     hash_obj = hashlib.new(algorithm)
@@ -78,8 +82,8 @@ def parse_book_info(url):
         }
 
 def get_total_pages(url=CATEGORY_URL):
-    response = requests.get(url)
-    response.raise_for_status()
+    response = requests.get(url, allow_redirects=False)
+    raise_for_status(response)
     soup = BeautifulSoup(response.text, 'lxml')
     end_page = soup.select('.npage')[-1].text
     return int(end_page)
@@ -87,8 +91,8 @@ def get_total_pages(url=CATEGORY_URL):
 def get_book_links(start_page, end_page, url=CATEGORY_URL):
     for page_number in range(start_page, end_page):
         page_url = urljoin(url, str(page_number))
-        response = requests.get(page_url)
-        response.raise_for_status()
+        response = requests.get(page_url, allow_redirects=False)
+        raise_for_status(response)
         soup = BeautifulSoup(response.text, 'lxml')
         books = soup.select('table.d_book div.bookimage a')
         
@@ -109,8 +113,6 @@ def main():
     parser = create_args_parser()
     args = parser.parse_args()
 
-    print('Download...')
-
     start_page = args.start_page
     end_page=args.end_page
 
@@ -119,8 +121,10 @@ def main():
         end_page = total_pages
         
     if end_page < start_page:
-        print('[*] Ошибка в аргументах --start_page и --end_page')
+        logger.error('Ошибка в аргументах --start_page и --end_page')
         return
+
+    logger.info('Download...')
 
     txt_path = os.path.join(args.dest_folder, FOLDER_PATH)
     img_path = os.path.join(args.dest_folder, IMAGES_PATH)
@@ -167,11 +171,8 @@ def main():
     with open(json_path, 'w') as file:
         json.dump(books_info, file, ensure_ascii=False)
 
-    print(f'Done in {monotonic() - time:.2f} sec.')
+    logger.info(f'Done in {monotonic() - time:.2f} sec.')
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except requests.HTTPError:
-        pass
+    main()
