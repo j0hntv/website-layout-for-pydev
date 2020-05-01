@@ -9,8 +9,8 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 
+
 logger = logging.getLogger('tululu')
-logging.basicConfig(level=logging.INFO, format=f'[%(levelname)s] %(message)s')
 
 CATEGORY_URL = 'http://tululu.org/l55/'
 FOLDER_PATH = 'books'
@@ -21,8 +21,10 @@ MAX_FILENAME_LENGHT = 50
 def raise_for_status(response):
     try:
         response.raise_for_status()
+        if response.status_code != 200: # А вдруг страницы не оказалось и случился редирект на главную?
+            raise requests.HTTPError
     except (requests.HTTPError, requests.ConnectionError) as error:
-        logger.error(error)
+        logger.error(f'{response.url}: {error}')
 
 def get_hash(obj, algorithm='md5'):
     hash_obj = hashlib.new(algorithm)
@@ -68,17 +70,15 @@ def parse_book_info(url):
     book_image_url = soup.select_one('.d_book a img')
     comments = soup.select('.texts .black')
     genres = soup.select('span.d_book a')
-
-    if book_txt_url:
-        return {
-            'title': title,
-            'author': author,
-            'book_txt_url': urljoin(url, book_txt_url['href']),
-            'book_image_url': urljoin(url, book_image_url['src']),
-            'book_image_name': book_image_url['src'].split('/')[-1],
-            'comments': [comment.text for comment in comments],
-            'genres': [genre.text for genre in genres]
-        }
+    return {
+        'title': title,
+        'author': author,
+        'book_txt_url': urljoin(url, book_txt_url['href']),
+        'book_image_url': urljoin(url, book_image_url['src']),
+        'book_image_name': book_image_url['src'].split('/')[-1],
+        'comments': [comment.text for comment in comments],
+        'genres': [genre.text for genre in genres]
+    }
 
 def get_total_pages(url=CATEGORY_URL):
     response = requests.get(url, allow_redirects=False)
@@ -109,6 +109,7 @@ def create_args_parser():
     return parser
 
 def main():
+    logging.basicConfig(level=logging.INFO, format=f'[%(levelname)s] %(message)s')
     parser = create_args_parser()
     args = parser.parse_args()
 
@@ -116,8 +117,7 @@ def main():
     end_page=args.end_page
 
     total_pages = get_total_pages()
-    if end_page > total_pages:
-        end_page = total_pages
+    end_page = min(end_page, total_pages)
         
     if end_page < start_page:
         logger.error('Ошибка в аргументах --start_page и --end_page')
@@ -143,9 +143,6 @@ def main():
     for book_link in book_links:
         try:
             book_info = parse_book_info(book_link)
-            if not book_info:
-                continue
-
             filename = book_info['title']
             imagename = book_info['book_image_name']
             txt_url = book_info['book_txt_url']
