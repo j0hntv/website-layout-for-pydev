@@ -1,4 +1,5 @@
 import json
+import os
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from more_itertools import chunked
@@ -27,7 +28,7 @@ def render_pages():
             books_description=descriptions,
             quote=quote
         )
-        with open(f'index{index}.html', 'w', encoding="utf8") as file:
+        with open(f'pages/index{index}.html', 'w', encoding="utf8") as file:
             file.write(rendered_page)
 
 
@@ -36,6 +37,7 @@ def on_reload():
 
 
 def main():
+    os.makedirs('pages', exist_ok=True)
     server = Server()
     server.watch('template.html', on_reload)
     server.serve(root='.')
