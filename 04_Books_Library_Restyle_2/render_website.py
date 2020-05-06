@@ -22,11 +22,15 @@ def render_pages():
     template = env.get_template('template.html')
     books_description = get_books_description()
     chunked_books_description = chunked(books_description, 2)
+    chunked_pages = list(chunked(chunked_books_description, 10))
+    total_pages = len(chunked_pages)
 
-    for index, descriptions in enumerate(chunked(chunked_books_description, 10), start=1):
+    for index, chunked_page in enumerate(chunked_pages, start=1):
         rendered_page = template.render(
-            books_description=descriptions,
-            quote=quote
+            books_description=chunked_page,
+            quote=quote,
+            total_pages=total_pages,
+            current_page=index
         )
         with open(f'pages/index{index}.html', 'w', encoding="utf8") as file:
             file.write(rendered_page)

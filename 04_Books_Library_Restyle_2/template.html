@@ -12,6 +12,27 @@
   
   <body>
     <div class="container">
+      <nav aria-label="Page navigation" class="pt-3">
+        <ul class="pagination">
+          {% if current_page == 1 %}
+            <li class="page-item disabled"><a class="page-link" href="" tabindex="-1" aria-disabled="true">Предыдущая</a></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="index{{current_page-1}}.html">Предыдущая</a></li>
+          {% endif %}
+          {% for index in range(1, total_pages+1) %}
+            {% if index == current_page %}
+              <li class="page-item active" aria-current="page"><a class="page-link active" href="index{{index}}.html">{{index}}</a></li>
+            {% else %}
+              <li class="page-item"><a class="page-link" href="index{{index}}.html">{{index}}</a></li>
+            {% endif %}
+          {% endfor %}
+          {% if current_page == total_pages %}
+            <li class="page-item disabled"><a class="page-link" href="" tabindex="-1" aria-disabled="true">Следующая</a></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="index{{current_page+1}}.html">Следующая</a></li>
+          {% endif %}
+        </ul>
+      </nav>
       {% for chunks in books_description %}
         <div class="row">
           {% for chunk in chunks %}
@@ -19,7 +40,7 @@
               <div class="card mb-3" style="max-width: 540px;">
                 <div class="row no-gutters">
                   <div class="col-md-4">
-                    <img src="{{chunk.img_src}}" class="card-img" alt="{{chunk.title}}">
+                    <img src="../{{chunk.img_src}}" class="card-img" alt="{{chunk.title}}">
                   </div> 
                   <div class="col-md-8">
                     <div class="card-body">
