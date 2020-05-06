@@ -46,7 +46,11 @@
                     <div class="card-body">
                       <h5 class="card-title">{{chunk.title}}</h5>
                       <p class="card-text">{{chunk.author}}</p>
-                      <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                      <p>
+                        {% for genre in chunk.genres %}
+                          <span class="badge badge-light">{{genre}}</span>
+                        {% endfor %}
+                      </p>
                       <p class="card-text"><a href="{{quote(chunk.book_src)}}" target="_blank">Читать</a></p>
                     </div>
                   </div>
