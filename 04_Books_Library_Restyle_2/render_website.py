@@ -12,22 +12,27 @@ def get_books_description():
     return books_description
 
 
-def on_reload():
+def render_pages():
     env = Environment(
         loader=FileSystemLoader('.'),
         autoescape=select_autoescape(['html', 'xml'])
     )
 
     template = env.get_template('template.html')
-    books_description = chunked(get_books_description()[:20], 2)
+    books_description = get_books_description()
+    chunked_books_description = chunked(books_description, 2)
 
-    rendered_page = template.render(
-        books_description=books_description,
-        quote=quote
-    )
+    for index, descriptions in enumerate(chunked(chunked_books_description, 10), start=1):
+        rendered_page = template.render(
+            books_description=descriptions,
+            quote=quote
+        )
+        with open(f'index{index}.html', 'w', encoding="utf8") as file:
+            file.write(rendered_page)
 
-    with open('index.html', 'w', encoding="utf8") as file:
-        file.write(rendered_page)
+
+def on_reload():
+    render_pages()
 
 
 def main():
