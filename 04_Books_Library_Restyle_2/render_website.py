@@ -3,6 +3,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from more_itertools import chunked
 from livereload import Server
+from urllib.parse import quote
 
 
 def get_books_description():
@@ -21,7 +22,8 @@ def on_reload():
     books_description = chunked(get_books_description()[:20], 2)
 
     rendered_page = template.render(
-        books_description=books_description
+        books_description=books_description,
+        quote=quote
     )
 
     with open('index.html', 'w', encoding="utf8") as file:
