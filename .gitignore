@@ -117,8 +117,6 @@ dmypy.json
 # vscode
 .vscode/
 
-books/
 *.jpg
 *.gif
 *.json
-pages/
