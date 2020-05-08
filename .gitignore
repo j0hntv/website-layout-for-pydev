@@ -117,6 +117,4 @@ dmypy.json
 # vscode
 .vscode/
 
-*.jpg
-*.gif
 *.json
