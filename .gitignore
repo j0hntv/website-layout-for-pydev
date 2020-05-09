@@ -56,7 +56,7 @@ coverage.xml
 *.log
 local_settings.py
 db.sqlite3
-media/
+02_Sensive_Blog_Templates/media/
 
 # Flask stuff:
 instance/
@@ -116,5 +116,3 @@ dmypy.json
 
 # vscode
 .vscode/
-
-*.json

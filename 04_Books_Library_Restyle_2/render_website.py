@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 
 def get_books_description():
-    with open('books/description.json') as file:
+    with open('media/description.json') as file:
         books_description = json.load(file)
     return books_description
 
