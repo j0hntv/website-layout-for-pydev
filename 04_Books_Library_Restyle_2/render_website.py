@@ -1,6 +1,5 @@
 import json
 import os
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from more_itertools import chunked
 from livereload import Server
