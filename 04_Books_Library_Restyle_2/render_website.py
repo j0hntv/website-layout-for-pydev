@@ -35,14 +35,11 @@ def render_pages():
             file.write(rendered_page)
 
 
-def on_reload():
-    render_pages()
-
-
 def main():
     os.makedirs('pages', exist_ok=True)
     server = Server()
-    server.watch('template.html', on_reload)
+    render_pages()
+    server.watch('template.html', render_pages)
     server.serve(root='.')
 
 
