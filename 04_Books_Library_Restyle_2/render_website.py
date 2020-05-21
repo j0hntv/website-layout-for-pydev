@@ -1,5 +1,6 @@
 import json
 import os
+from glob import glob
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from more_itertools import chunked
 from livereload import Server
@@ -10,6 +11,12 @@ def get_books_description():
     with open('media/description.json') as file:
         books_description = json.load(file)
     return books_description
+
+
+def remove_old_pages():
+    pages = glob('pages/*.html')
+    for page in pages:
+        os.remove(page)
 
 
 def render_pages():
@@ -37,6 +44,7 @@ def render_pages():
 
 def main():
     os.makedirs('pages', exist_ok=True)
+    remove_old_pages()
     server = Server()
     render_pages()
     server.watch('template.html', render_pages)
