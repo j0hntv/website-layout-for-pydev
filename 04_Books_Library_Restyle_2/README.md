@@ -21,7 +21,7 @@ pip3 install -r requirements.txt
 ```
 ./pages/index1.html
 ```
-Для редактирования `template.html` можно запустить сервер с отслеживанием изменений:
+Для редактирования шаблона `template.html` можно запустить сервер с отслеживанием изменений и генерацией html-страниц:
 ```
 python3 render_website.py
 ```
@@ -29,6 +29,8 @@ python3 render_website.py
 ```
 http://127.0.0.1:5500/pages/index1.html
 ```
+## Изменение библиотеки:
+[Инструкция](https://github.com/j0hntv/Website_Layout_For_Pydev/tree/master/03_Books_Library_Restyle) по парсингу библиотеки.
 
 
 # About:
