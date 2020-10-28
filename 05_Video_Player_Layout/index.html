@@ -10,52 +10,53 @@
       display: flex;
       flex-direction: column;
     }
-    .shadow {
+    .player-shadow {
       box-shadow: 0px 0px 10px rgba(0,0,0,0.8);
     }
-    .video {
+    .player-video {
       flex-grow: 1;
     }
-    .buttons {
+    .player-menu {
       background-color: black;
       display: flex;
       flex-direction: row;
     }
-    button {
+    .player-button {
       color: white;
       background-color: transparent;
       border-style: none;
       font-size: large;
+      width: 30px;
       padding: 10px;
       margin: 1px;
     }
   </style>
 </head>
 <body>
-  <div id="player" class="container shadow" style="width: 800px; height: 600px;">
+  <div id="player" class="container player-shadow" style="width: 800px; height: 600px;">
 
-    <div class="js-video-container video"></div>
+    <div class="js-video-container player-video"></div>
 
-    <div class="buttons">
-      <button class="js-play-button">
+    <div class="player-menu">
+      <button class="js-play-button player-button">
         <i class="fa fa-play" aria-hidden="true"></i>
       </button>
 
-      <button class="js-pause-button" hidden>
+      <button class="js-pause-button player-button" hidden>
         <i class="fa fa-pause" aria-hidden="true"></i>
       </button>
 
-      <button class=js-volume-button>
+      <button class="js-volume-button player-button">
         <i class="fa fa-volume-off" hidden></i>
       </button>
 
-      <button class=js-mute-button>
+      <button class="js-mute-button player-button">
         <i class="fa fa-volume-up"></i>
       </button>
 
       <div style="flex-grow: 1;"></div>
 
-      <button class="js-fullscreen-button">
+      <button class="js-fullscreen-button player-button">
         <i class="fa fa-expand"></i>
       </button>
     </div>
